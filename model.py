@@ -1,5 +1,3 @@
-Python 3.11.4 (tags/v3.11.4:d2340ef, Jun  7 2023, 05:45:37) [MSC v.1934 64 bit (AMD64)] on win32
-Type "help", "copyright", "credits" or "license()" for more information.
 #IMPORT THE LIBRARIES
 
 import os
@@ -17,7 +15,7 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import MaxPooling2D
 from keras import backend as K
 
-# READING IMAGE DATA FROM THE LOG
+# READING IMAGE DATA FROM THE DRIVING LOG
 
 lines = []
 header = True
@@ -55,56 +53,55 @@ with open('data/driving_log.csv', 'r') as f:
         camera_images.extend([img_center, img_left, img_right])
         steering_angles.extend([steering_center, steering_left, steering_right])
 
-## DATA AUGMENTATION STEP
+# THE DATA AUGMENTATION STEP
 augmented_imgs, augmented_sas= [],[]
 
 for aug_img,aug_sa in zip(camera_images,steering_angles):
     augmented_imgs.append(aug_img)
     augmented_sas.append(aug_sa)
     
-    #Flipping the image
+    #Flipping the images
     augmented_imgs.append(cv2.flip(aug_img,1))
     
     #Reversing the steering angle
     augmented_sas.append(aug_sa*-1.0)
   
-# INDEPENDENT VARIABLES and LABELS
+# SPLITTING THE DATA
 X_train, y_train = np.array(augmented_imgs), np.array(augmented_sas)
 X_train, y_train = np.array(camera_images), np.array(steering_angles)
 
-#IMAGE PRE-PROCESSING
-... def preprocess(image):
-...     import tensorflow as tf
-...     #Resizing the image
-...     return tf.image.resize_images(image, (200, 66))
-... 
-... # THE CNN ARCHITECTURE 
-... #Keras Sequential Model
-... model = Sequential()
-... 
-... #Image cropping to get rid of the irrelevant parts of the image (the hood and the sky)
-... model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160,320,3)))
-... 
-... #Pre-Processing the image
-... model.add(Lambda(preprocess))
-... model.add(Lambda(lambda x: (x/ 127.0 - 1.0)))
-... 
-... #The layers
-... model.add(Conv2D(filters=24, kernel_size=(5, 5), strides=(2, 2),activation='relu'))
-... model.add(Conv2D(filters=36, kernel_size=(5, 5),strides=(2, 2), activation='relu'))
-... model.add(Conv2D(filters=48, kernel_size=(5, 5), strides=(2, 2),activation='relu'))
-... model.add(Conv2D(filters=64, kernel_size=(3, 3) ,activation='relu'))
-... model.add(Conv2D(filters=64, kernel_size=(3, 3),activation='relu'))
-... model.add(Dropout(0.5))
-... model.add(Flatten())
-... model.add(Dense(units=100, activation='relu'))
-... model.add(Dense(units=50, activation='relu'))
-... model.add(Dense(units=10, activation='relu'))
-... model.add(Dense(units=1))
-... print(model.summary())
-... 
-... #Compiling and Saving the Model
-... model.compile(loss='mse',optimizer='adam') #adaptive moment estimation.
-... model.fit(X_train,y_train,validation_split=0.2,shuffle=True,nb_epoch=10)
-... model.save('model.h5') 
-... 
+#IMAGE PRE-PROCESSING STEP
+def preprocess(image):
+    import tensorflow as tf
+    #Resizing the image
+    return tf.image.resize_images(image, (200, 66))
+ 
+# THE CNN ARCHITECTURE 
+#Keras Sequential Model
+model = Sequential()
+ 
+#Image cropping to get rid of the irrelevant parts of the image (the hood and the sky)
+model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160,320,3)))
+
+#Pre-Processing the image
+model.add(Lambda(preprocess))
+model.add(Lambda(lambda x: (x/ 127.0 - 1.0)))
+ 
+#The layers
+model.add(Conv2D(filters=24, kernel_size=(5, 5), strides=(2, 2),activation='relu'))
+model.add(Conv2D(filters=36, kernel_size=(5, 5),strides=(2, 2), activation='relu'))
+model.add(Conv2D(filters=48, kernel_size=(5, 5), strides=(2, 2),activation='relu'))
+model.add(Conv2D(filters=64, kernel_size=(3, 3) ,activation='relu'))
+model.add(Conv2D(filters=64, kernel_size=(3, 3),activation='relu'))
+model.add(Dropout(0.5))
+model.add(Flatten())
+model.add(Dense(units=100, activation='relu'))
+model.add(Dense(units=50, activation='relu'))
+model.add(Dense(units=10, activation='relu'))
+model.add(Dense(units=1))
+print(model.summary())
+ 
+#Compiling and Saving the Model
+model.compile(loss='mse',optimizer='adam') #adaptive moment estimation.
+model.fit(X_train,y_train,validation_split=0.2,shuffle=True,nb_epoch=10)
+model.save('model.h5') 
